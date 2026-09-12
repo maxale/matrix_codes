@@ -1,0 +1,10 @@
+Software: Toeplitz recurrence algorithms - Wolfram Language
+Accompanying paper: Constructive recurrences for determinants and permanents of banded Toeplitz matrices
+Authors: Max A. Alekseyev; Dmitry I. Khomovsky
+Code release: v10
+Language: Wolfram Language / Mathematica
+Minimum target: Mathematica 2021.1 or later
+External Wolfram dependencies: none
+Repository: https://github.com/maxale/matrix_codes
+Public convention: m1 counts subdiagonals; m2 counts superdiagonals; DiagonalValues are ordered by offsets -m1,...,m2
+Distant-term implementation reference: Dmitry I. Khomovsky, Efficient Computation of Terms of Linear Recurrence Sequences of Any Order, INTEGERS 18 (2018), A39

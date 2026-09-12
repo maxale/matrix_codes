@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the accompanying paper."
+title: "Toeplitz recurrence algorithms - Wolfram Language"
+type: software
+authors:
+  - family-names: Alekseyev
+    given-names: Max A.
+    email: maxal@gwu.edu
+  - family-names: Khomovsky
+    given-names: Dmitry I.
+    email: khomovskij@physics.msu.ru
+repository-code: "https://github.com/maxale/matrix_codes"
+version: "10"
+date-released: 2026-09-12
+preferred-citation:
+  type: article
+  title: "Constructive recurrences for determinants and permanents of banded Toeplitz matrices"
+  authors:
+    - family-names: Alekseyev
+      given-names: Max A.
+    - family-names: Khomovsky
+      given-names: Dmitry I.
+  year: 2026
