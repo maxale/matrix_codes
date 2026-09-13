@@ -56,24 +56,90 @@ trPrincipalCoordinate[states_List] := Module[{p},
   If[MissingQ[p], 1, First[p]]
 ];
 
+ClearAll[trKrylovZeroQ];
+trKrylovZeroQ[expr_] := TrueQ[expr === 0] || TrueQ[PossibleZeroQ[expr]];
+
+(* Incremental fraction-free row elimination with relation certificates.
+   The pivot order starts with the observable coordinate, so the initial
+   coordinate row is the first echelon pivot even if that coordinate is not
+   column 1.  Accepted rows remain denominator-free whenever the transfer
+   entries are polynomial. *)
+ClearAll[trKrylovIncrementalInsert];
+trKrylovIncrementalInsert[
+    row_List, basisRows_List, basisReps_List, pivots_List,
+    rowCount_Integer, columnOrder_List] := Module[
+  {work = row, reps, rep, factor, pivotValue, pivot, i},
+
+  reps = (PadRight[#, rowCount + 1, 0] &) /@ basisReps;
+  rep = UnitVector[rowCount + 1, rowCount + 1];
+
+  Do[
+    factor = work[[pivots[[i]]]];
+    If[!trKrylovZeroQ[factor],
+      pivotValue = basisRows[[i, pivots[[i]]]];
+      work = MapThread[
+        Expand[pivotValue #1 - factor #2] &,
+        {work, basisRows[[i]]}
+      ];
+      rep = MapThread[
+        Expand[pivotValue #1 - factor #2] &,
+        {rep, reps[[i]]}
+      ]
+    ],
+    {i, Length[pivots]}
+  ];
+
+  pivot = SelectFirst[
+    columnOrder,
+    !trKrylovZeroQ[work[[#]]] &,
+    Missing["NotFound"]
+  ];
+
+  If[MissingQ[pivot],
+    <|
+      "Dependent" -> True,
+      "Relation" -> rep,
+      "BasisRows" -> basisRows,
+      "BasisRepresentations" -> reps,
+      "Pivots" -> pivots
+    |>,
+    <|
+      "Dependent" -> False,
+      "BasisRows" -> Append[basisRows, work],
+      "BasisRepresentations" -> Append[reps, rep],
+      "Pivots" -> Append[pivots, pivot]
+    |>
+  ]
+];
+
 ClearAll[trKrylovScalarization];
 trKrylovScalarization[matrix_, var_, coordinate_Integer] := Module[
-  {n, row, rows, next, trial, basis, rel, coeffs, r, poly,
-   companionRules, companion, observable, similarity, result = $Failed},
+  {n, row, rows, next, basisRows, basisReps, pivots, columnOrder,
+   insert, rel, coeffs, r, poly, companionRules, companion,
+   observable, similarity, result = $Failed},
 
   n = First[Dimensions[matrix]];
   row = UnitVector[n, coordinate];
   rows = {row};
 
+  (* The first Krylov row is already an echelon row.  Subsequent rows are
+     inserted incrementally instead of recomputing NullSpace on the whole
+     growing Krylov matrix at every step. *)
+  basisRows = {row};
+  basisReps = {{1}};
+  pivots = {coordinate};
+  columnOrder = Join[{coordinate}, DeleteCases[Range[n], coordinate]];
+
   Do[
-    next = (Cancel[Together[#]] &) /@ Normal[Last[rows].matrix];
-    trial = Append[rows, next];
-    basis = NullSpace[Transpose[trial]];
+    next = Expand /@ Normal[Last[rows].matrix];
+    insert = trKrylovIncrementalInsert[
+      next, basisRows, basisReps, pivots, Length[rows], columnOrder
+    ];
 
-    If[basis =!= {},
-      rel = SelectFirst[basis, Last[#] =!= 0 &, Missing["NoUsableRelation"]];
-
-      If[!MissingQ[rel],
+    If[TrueQ[insert["Dependent"]],
+      rel = insert["Relation"];
+      If[Length[rel] === Length[rows] + 1 &&
+          !trKrylovZeroQ[Last[rel]],
         coeffs = (Cancel[Together[#]] &) /@ (-Most[rel]/Last[rel]);
         r = Length[coeffs];
         poly = Expand[var^r - Sum[coeffs[[j + 1]] var^j, {j, 0, r - 1}]];
@@ -93,12 +159,15 @@ trKrylovScalarization[matrix_, var_, coordinate_Integer] := Module[
           "ScalarRecurrencePolynomial" -> poly,
           "KrylovCompanionMatrix" -> companion,
           "SimilarityMatrix" -> similarity
-        |>;
-        Break[]
-      ]
+        |>
+      ];
+      Break[]
     ];
 
-    rows = trial,
+    basisRows = insert["BasisRows"];
+    basisReps = insert["BasisRepresentations"];
+    pivots = insert["Pivots"];
+    AppendTo[rows, next],
     {n}
   ];
 
