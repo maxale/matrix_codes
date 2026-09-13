@@ -12,7 +12,7 @@ TRKrylovSamePolynomialQ[p_, q_] := TrueQ[Expand[p - q] === 0];
 
 RunToeplitzKrylovTests[] := Module[
   {x = \[FormalX], aa = \[FormalA],
-   A, B, C, k11, k22, kp22, ks22, c22, skipped, pos22, scopeKrylov, scopeGlobals, tests,
+   A, B, C, k11, k22, kp22, ks22, c22, skipped, pos22, manualKrylov, scopeKrylov, scopeGlobals, tests,
    expected22, expectedSym5},
 
   k11 = LinRecForDTM[1, 1,
@@ -51,6 +51,12 @@ RunToeplitzKrylovTests[] := Module[
     ScalarRecurrence -> False,
     ScalarRecurrenceMethod -> "Krylov",
     Verbose -> False];
+
+  (* Direct private-level regression with a non-first observable coordinate.
+     This exercises the pivot ordering used by the incremental elimination. *)
+  manualKrylov = ToeplitzRecurrences`Private`trKrylovScalarization[
+    {{1, 2, 0}, {0, 3, 4}, {5, 0, 6}}, x, 2
+  ];
 
   {scopeKrylov, scopeGlobals} = Block[
     {Global`a = 9, Global`x = 17, Global`k = 23},
@@ -190,6 +196,18 @@ RunToeplitzKrylovTests[] := Module[
       pos22["ScalarRecurrencePolynomial"],
       Missing["PositionDependent"],
       TestID -> "Krylov leaves position-dependent transfer unsimplified"
+    ],
+    VerificationTest[
+      {manualKrylov["ObservableCoordinate"], manualKrylov["ObservableOrder"]},
+      {2, 3},
+      TestID -> "incremental Krylov supports a non-first observable coordinate"
+    ],
+    VerificationTest[
+      TRKrylovSamePolynomialQ[
+        manualKrylov["ScalarRecurrencePolynomial"],
+        x^3 - 10 x^2 + 27 x - 58],
+      True,
+      TestID -> "incremental Krylov non-first-coordinate recurrence"
     ],
     VerificationTest[
       TRKrylovSamePolynomialQ[
