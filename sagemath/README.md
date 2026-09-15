@@ -1,8 +1,8 @@
 # Toeplitz recurrence algorithms - SageMath
 
-This directory contains the SageMath implementation accompanying
+This directory contains the SageMath implementation accompanying the preprint
 **Constructive recurrences for determinants and permanents of banded Toeplitz matrices**
-by Max A. Alekseyev and Dmitry I. Khomovsky.
+by Max A. Alekseyev and Dmitry I. Khomovsky, [arXiv:2609.13674](https://arxiv.org/abs/2609.13674).
 
 The code constructs finite recurrences for determinants and permanents of fixed-band
 Toeplitz matrices, supports the increasing-rows and row-column constructions developed in
@@ -363,11 +363,10 @@ See `VERIFICATION.md` for the validation status of this exported bundle.
 ## References for distant-term evaluation
 
 - C. M. Fiduccia, "An Efficient Formula for Linear Recurrences", SIAM Journal on
-  Computing 14 (1985), 106-112. DOI: 10.1137/0214007. `https://doi.org/10.1137/0214007`
+  Computing 14 (1985), 106-112. DOI:[10.1137/0214007](https://doi.org/10.1137/0214007).
 - D. I. Khomovsky, "Efficient Computation of Terms of Linear Recurrence Sequences of Any Order",
-  INTEGERS 18 (2018), A39.
-  `https://math.colgate.edu/~integers/s39/s39.pdf`
-
+  INTEGERS 18 (2018), A39. URL:[https://math.colgate.edu/~integers/s39/s39.pdf](https://math.colgate.edu/~integers/s39/s39.pdf)
+  
 ## Citation
 
 Please cite the accompanying paper **Constructive recurrences for determinants and
