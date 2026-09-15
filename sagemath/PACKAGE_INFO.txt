@@ -1,0 +1,12 @@
+Software: Toeplitz recurrence algorithms - SageMath
+Accompanying paper: Constructive recurrences for determinants and permanents of banded Toeplitz matrices
+Authors: Max A. Alekseyev; Dmitry I. Khomovsky
+Code release: v5
+Language: SageMath / Python
+Recommended target: SageMath 10.x or later
+External Sage dependencies: none
+Repository: https://github.com/maxale/matrix_codes
+Public convention: m1 counts subdiagonals; m2 counts superdiagonals; diagonal_values are ordered by offsets -m1,...,m2
+Distant-term implementation reference: Dmitry I. Khomovsky, Efficient Computation of Terms of Linear Recurrence Sequences of Any Order, INTEGERS 18 (2018), A39
+
+Coefficient-ring policy: exact Sage parents only; no dependency on Sage Symbolic Ring (SR)
