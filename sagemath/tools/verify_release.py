@@ -10,15 +10,18 @@ import sys
 from pathlib import Path
 
 PAPER_TITLE = "Constructive recurrences for determinants and permanents of banded Toeplitz matrices"
+SYMMETRY_PAPER_TITLE = "Symmetry reductions and recurrence degrees for banded Toeplitz determinants and permanents"
 REQUIRED = [
     "README.md", "CITATION.cff", "CHANGELOG.md", "PACKAGE_INFO.txt", "VERIFICATION.md", ".gitignore",
-    "src/toeplitz_recurrences.py", "src/toeplitz_recurrences.sage",
-    "examples/paper_examples.sage", "examples/compare_fiduccia.sage",
+    "src/toeplitz_recurrences.py", "src/toeplitz_symmetry_reductions.py", "src/toeplitz_recurrences.sage",
+    "examples/paper_examples.sage", "examples/symmetry_examples.sage", "examples/circulant_bridge_examples.sage", "examples/compare_fiduccia.sage",
     "tests/run_tests.sage", "tests/test_python_core.py", "tests/test_python_increasing_logic.py",
     "tests/test_python_package_contract.py", "tests/test_python_krylov_incremental.py", "tests/test_python_paper_formulas.py",
     "tests/test_python_release_contract.py", "tests/test_python_state_logic.py", "tests/test_sage_row_column.sage",
     "tests/test_sage_increasing_rows.sage", "tests/test_sage_krylov.sage",
-    "tests/test_sage_fiduccia_integration.sage", "tests/test_python_no_symbolic_ring.py", "tools/verify_release.py",
+    "tests/test_sage_fiduccia_integration.sage", "tests/test_sage_symmetry_reductions.sage",
+    "tests/test_sage_circulant_bridge.sage",
+    "tests/test_python_no_symbolic_ring.py", "tests/test_python_symmetry_logic.py", "tools/verify_release.py",
 ]
 TEXT_SUFFIXES = {".py", ".sage", ".md", ".txt", ".cff"}
 FORBIDDEN = [
@@ -61,6 +64,23 @@ EXPECTED_DEFAULTS = {
         "modulus": "None", "term_count": "1", "verbose": "False", "position_dependent": "False",
     },
     "sage_cfinite_term": {"term_count": "1"},
+}
+
+SYMMETRY_APIS = [
+    "symmetric_determinant_recurrence",
+    "skew_symmetric_determinant_recurrence",
+]
+SYMMETRY_DEFAULTS = {
+    "symmetric_determinant_recurrence": {
+        "diagonal_values": "None",
+        "characteristic_polynomial_variable": "'x'",
+        "verbose": "True",
+    },
+    "skew_symmetric_determinant_recurrence": {
+        "diagonal_values": "None",
+        "characteristic_polynomial_variable": "'x'",
+        "verbose": "True",
+    },
 }
 
 
@@ -141,7 +161,26 @@ def main() -> int:
                 if actual.get(key) != value:
                     errors.append(f"source default mismatch: {func}.{key} expected {value}, got {actual.get(key)}")
 
-    exact_surfaces = [source_path, root / "src/toeplitz_recurrences.sage", root / "README.md"]
+    symmetry_source_path = root / "src/toeplitz_symmetry_reductions.py"
+    if symmetry_source_path.is_file():
+        symmetry_source = symmetry_source_path.read_text(encoding="utf-8")
+        if SYMMETRY_PAPER_TITLE not in symmetry_source:
+            errors.append("symmetry paper title missing from optional Sage symmetry source")
+        try:
+            symmetry_names, symmetry_defaults = parse_defaults(symmetry_source_path)
+        except SyntaxError as exc:
+            errors.append(f"symmetry Python source syntax error: {exc}")
+            symmetry_names, symmetry_defaults = set(), {}
+        for name in SYMMETRY_APIS:
+            if name not in symmetry_names:
+                errors.append(f"symmetry public interface missing from source: {name}")
+        for func, expected in SYMMETRY_DEFAULTS.items():
+            actual = symmetry_defaults.get(func, {})
+            for key, value in expected.items():
+                if actual.get(key) != value:
+                    errors.append(f"symmetry source default mismatch: {func}.{key} expected {value}, got {actual.get(key)}")
+
+    exact_surfaces = [source_path, root / "src/toeplitz_symmetry_reductions.py", root / "src/toeplitz_recurrences.sage", root / "README.md"]
     exact_surfaces.extend((root / "tests").glob("*.sage"))
     exact_surfaces.extend((root / "examples").glob("*.sage"))
     symbolic_markers = ("sage.SR", "from sage.all import SR", "SR(", "var(")
@@ -165,7 +204,10 @@ def main() -> int:
         "Efficient Computation of Terms of Linear Recurrence Sequences of Any Order",
         "INTEGERS 18", "10.1137/0214007", "hardcoded modular-polynomial-squaring formulas",
         "## Exact coefficient-ring policy", "multivariate polynomial rings over `QQ`",
-        "fraction field", "integer position",
+        "fraction field", "integer position", SYMMETRY_PAPER_TITLE,
+        "symmetric_determinant_recurrence", "skew_symmetric_determinant_recurrence",
+        "doset", "Catalan", "Q^2", "R(x^2)", "Toeplitz-circulant bridge",
+        "structural_hodge_half_order",
     ]
     for token in required_readme:
         if token.lower() not in readme.lower():
@@ -174,7 +216,7 @@ def main() -> int:
     cff_path = root / "CITATION.cff"
     cff = cff_path.read_text(encoding="ascii") if cff_path.is_file() else ""
     for token in [
-        'title: "Toeplitz recurrence algorithms - SageMath"', 'version: "5"', PAPER_TITLE,
+        'title: "Toeplitz recurrence algorithms - SageMath"', 'version: "7"', PAPER_TITLE,
         'repository-code: "https://github.com/maxale/matrix_codes"',
     ]:
         if token not in cff:
@@ -190,6 +232,21 @@ def main() -> int:
     ]:
         if token not in examples:
             errors.append(f"paper_examples.sage missing: {token}")
+
+    symmetry_examples_path = root / "examples/symmetry_examples.sage"
+    symmetry_examples = symmetry_examples_path.read_text(encoding="ascii") if symmetry_examples_path.is_file() else ""
+    for token in [
+        "symmetric_determinant_recurrence", "skew_symmetric_determinant_recurrence",
+        "reduced_state_order", "two_step_observable_order", "full_annihilator_order",
+    ]:
+        if token not in symmetry_examples:
+            errors.append(f"symmetry_examples.sage missing: {token}")
+
+    bridge_test_path = root / "tests/test_sage_circulant_bridge.sage"
+    bridge_test = bridge_test_path.read_text(encoding="ascii") if bridge_test_path.is_file() else ""
+    for token in ["minimal_circulant_completion", "C.inverse()", "T.det() == C.det() * correction.det()"]:
+        if token not in bridge_test:
+            errors.append(f"test_sage_circulant_bridge.sage missing: {token}")
 
     manifest = root / "MANIFEST.sha256"
     if manifest.is_file():

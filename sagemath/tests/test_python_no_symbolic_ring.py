@@ -4,6 +4,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_CODE = [
     ROOT / "src" / "toeplitz_recurrences.py",
+    ROOT / "src" / "toeplitz_symmetry_reductions.py",
     ROOT / "src" / "toeplitz_recurrences.sage",
 ]
 SAGE_SURFACES = list((ROOT / "tests").glob("*.sage")) + list((ROOT / "examples").glob("*.sage"))

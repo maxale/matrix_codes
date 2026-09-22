@@ -1,5 +1,36 @@
 # Changelog
 
+## v7 - 2026-09-19
+
+- Synchronized the optional symmetry module with the corrected skew two-step formulation in
+  *Symmetry reductions and recurrence degrees for banded Toeplitz determinants and permanents*.
+- Replaced the production skew route based on extracting `R` from a direct full-sequence
+  polynomial `P(x)=R(x^2)` by the constructive route `Q -> Q^2 -> principal Krylov R(y)`,
+  followed by the full one-step annihilator `R(x^2)`.
+- Reported `binomial(2*m,m)/2` explicitly as the theoretical Hodge-half dimension rather than
+  as a locally constructed quotient of normalized row-column states.
+- Retained the direct full-sequence Krylov computation only in small-width runtime tests as an
+  independent cross-check of the lifted two-step annihilator.
+- Added exact Toeplitz-circulant bridge verification scripts and a README reproducibility map
+  separating the companion recurrence-paper code from the symmetry-paper code.
+- The tested v5 generic recurrence core and the v6 symmetric doset/Catalan construction are
+  unchanged.
+
+## v6 - 2026-09-16
+
+- Added `src/toeplitz_symmetry_reductions.py` as an optional layer accompanying
+  *Symmetry reductions and recurrence degrees for banded Toeplitz determinants and permanents*.
+- Implemented the symmetric balanced determinant pseudocode by straightening every newly
+  generated row-column minor immediately into the doset basis, assembling the Catalan
+  transfer, and applying the existing optimized principal-coordinate Krylov scalarization.
+- Added a skew-symmetric determinant constructor that computes the exact full observable
+  polynomial and its even form `P(x)=R(x^2)`, with an autonomous companion transfer for the
+  even-size subsequence and the structural half-state dimension reported separately.
+- Added backend-independent doset/straightening tests plus Sage runtime comparisons against
+  the unrestricted principal Krylov polynomial, symmetry examples, and release-verifier coverage.
+- The v5 generic recurrence core remains algorithmically unchanged and continues to avoid
+  Sage's Symbolic Ring.
+
 ## v5 - 2026-09-13
 
 - Fixed the internal fresh polynomial-variable name used by `term_for_dtm` and `term_for_ptm`: temporary names now begin with a letter (`toeplitz_lambda_N`), as required by SageMath `PolynomialRing`.

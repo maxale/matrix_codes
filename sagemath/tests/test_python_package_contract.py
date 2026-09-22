@@ -43,9 +43,10 @@ class PackageContractTests(unittest.TestCase):
     def test_distribution_scaffolding_exists(self):
         for name in [
             "README.md", "CITATION.cff", "CHANGELOG.md", "PACKAGE_INFO.txt",
-            "VERIFICATION.md", "src/toeplitz_recurrences.py",
+            "VERIFICATION.md", "src/toeplitz_recurrences.py", "src/toeplitz_symmetry_reductions.py",
             "src/toeplitz_recurrences.sage", "tests/run_tests.sage",
             "examples/compare_fiduccia.sage", "examples/paper_examples.sage",
+            "examples/symmetry_examples.sage", "tests/test_sage_symmetry_reductions.sage",
             "tools/verify_release.py",
         ]:
             with self.subTest(name=name):

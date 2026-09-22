@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you use this software, please cite the accompanying paper."
+message: "See README.md for component-specific paper citations."
 title: "Toeplitz recurrence algorithms - SageMath"
 type: software
 authors:
@@ -10,8 +10,8 @@ authors:
     given-names: Dmitry I.
     email: khomovskij@physics.msu.ru
 repository-code: "https://github.com/maxale/matrix_codes"
-version: "5"
-date-released: 2026-09-13
+version: "7"
+date-released: 2026-09-19
 preferred-citation:
   type: article
   title: "Constructive recurrences for determinants and permanents of banded Toeplitz matrices"

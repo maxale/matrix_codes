@@ -21,11 +21,19 @@ for name in (
     "test_sage_increasing_rows.sage",
     "test_sage_krylov.sage",
     "test_sage_fiduccia_integration.sage",
+    "test_sage_symmetry_reductions.sage",
+    "test_sage_circulant_bridge.sage",
 ):
     print(f"\n=== {name} ===")
     runpy.run_path(str(TESTS / name), run_name="__main__")
 
 print("\n=== paper_examples.sage ===")
 runpy.run_path(str(ROOT / "examples" / "paper_examples.sage"), run_name="__main__")
+
+print("\n=== symmetry_examples.sage ===")
+runpy.run_path(str(ROOT / "examples" / "symmetry_examples.sage"), run_name="__main__")
+
+print("\n=== circulant_bridge_examples.sage ===")
+runpy.run_path(str(ROOT / "examples" / "circulant_bridge_examples.sage"), run_name="__main__")
 
 print("\nALL TOEPLITZ SAGEMATH TESTS: PASS")

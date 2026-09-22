@@ -61,9 +61,10 @@ class ReleaseContractTests(unittest.TestCase):
     def test_required_layout(self):
         required = [
             "README.md", "CITATION.cff", "CHANGELOG.md", "PACKAGE_INFO.txt", "VERIFICATION.md",
-            ".gitignore", "src/toeplitz_recurrences.py", "src/toeplitz_recurrences.sage",
-            "examples/paper_examples.sage", "examples/compare_fiduccia.sage",
-            "tests/run_tests.sage", "tools/verify_release.py",
+            ".gitignore", "src/toeplitz_recurrences.py", "src/toeplitz_symmetry_reductions.py", "src/toeplitz_recurrences.sage",
+            "examples/paper_examples.sage", "examples/symmetry_examples.sage", "examples/circulant_bridge_examples.sage", "examples/compare_fiduccia.sage",
+            "tests/run_tests.sage", "tests/test_sage_symmetry_reductions.sage", "tests/test_sage_circulant_bridge.sage",
+            "tests/test_python_symmetry_logic.py", "tools/verify_release.py",
         ]
         self.assertEqual([p for p in required if not (ROOT / p).is_file()], [])
 
@@ -84,6 +85,8 @@ class ReleaseContractTests(unittest.TestCase):
             "`scalar_recurrence_method` | `\"characteristic_polynomial\"`",
             "`ell_range` | `\"forward\"`", "`modulus` | `None`", "`term_count` | `1`",
             "`verbose` | `False`", "`sage_cfinite_term",
+            "symmetric_determinant_recurrence", "skew_symmetric_determinant_recurrence",
+            "two_step_observable_order", "full_annihilator_order", "Toeplitz-circulant bridge",
         ]
         for token in tokens:
             self.assertIn(token, text)

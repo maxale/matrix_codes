@@ -1,8 +1,12 @@
 # Toeplitz recurrence algorithms - SageMath
 
-This directory contains the SageMath implementation accompanying the preprint
+This directory contains the SageMath implementation accompanying
 **Constructive recurrences for determinants and permanents of banded Toeplitz matrices**
-by Max A. Alekseyev and Dmitry I. Khomovsky, [arXiv:2609.13674](https://arxiv.org/abs/2609.13674).
+by Max A. Alekseyev and Dmitry I. Khomovsky.
+
+The optional symmetry module also accompanies
+**Symmetry reductions and recurrence degrees for banded Toeplitz determinants and permanents**
+by the same authors.
 
 The code constructs finite recurrences for determinants and permanents of fixed-band
 Toeplitz matrices, supports the increasing-rows and row-column constructions developed in
@@ -32,9 +36,11 @@ toeplitz_recurrences_sagemath/
 |-- MANIFEST.sha256
 |-- src/
 |   |-- toeplitz_recurrences.py
+|   |-- toeplitz_symmetry_reductions.py
 |   `-- toeplitz_recurrences.sage
 |-- examples/
 |   |-- paper_examples.sage
+|   |-- symmetry_examples.sage
 |   `-- compare_fiduccia.sage
 |-- tests/
 |   |-- run_tests.sage
@@ -45,10 +51,12 @@ toeplitz_recurrences_sagemath/
 |   |-- test_python_release_contract.py
 |   |-- test_python_state_logic.py
 |   |-- test_python_no_symbolic_ring.py
+|   |-- test_python_symmetry_logic.py
 |   |-- test_sage_row_column.sage
 |   |-- test_sage_increasing_rows.sage
 |   |-- test_sage_krylov.sage
-|   `-- test_sage_fiduccia_integration.sage
+|   |-- test_sage_fiduccia_integration.sage
+|   `-- test_sage_symmetry_reductions.sage
 `-- tools/
     `-- verify_release.py
 ```
@@ -67,6 +75,7 @@ or in Sage/Python code:
 import sys
 sys.path.insert(0, "src")
 from toeplitz_recurrences import *
+from toeplitz_symmetry_reductions import *
 ```
 
 The public convention is always
@@ -86,21 +95,60 @@ and `diagonal_values` are supplied in offset order `-m1,...,m2`.
 | Row-column transfer construction | `lin_rec_for_dtm`, `lin_rec_for_ptm` | Uses the paper's first-discovery state ordering. |
 | Characteristic-polynomial scalarization | `scalar_recurrence=True` | Uses Sage matrix `charpoly`. |
 | Observable/Krylov scalarization | `scalar_recurrence_method="krylov"` | Can produce a smaller observable annihilator. |
+| Symmetric determinant doset/Catalan reduction | `symmetric_determinant_recurrence` | Straightens every generated symmetric boundary minor immediately into the doset basis, builds the Catalan transfer, and runs principal Krylov scalarization. |
+| Skew-symmetric determinant two-step reduction | `skew_symmetric_determinant_recurrence` | Keeps the normalized row-column transfer `Q`, applies principal Krylov scalarization to `Q^2`, and lifts the two-step polynomial `R(y)` to the full annihilator `R(x^2)`. |
 | Position-dependent row-column cocycle | `position_dependent=True` | Returns a position-dependent transfer; constant scalarization is intentionally disabled. |
 | Distant-term evaluation | `fiduccia_pol_squarings`, `term_for_dtm`, `term_for_ptm` | Applies only after a homogeneous constant-coefficient recurrence has been obtained. |
 | Sage-native recurrence comparison | `sage_cfinite_term` | Uses Sage `CFiniteSequences` as an independent reference path for rational/integer recurrences. |
 | Sparse `(2,1)` Toeplitz-Hessenberg spectral example | `lin_rec_for_dtm(2,1,...)`, `term_for_dtm(2,1,...)` | `examples/paper_examples.sage` checks the characteristic recurrence and explicit finite-section formula behind the threefold spectrum. |
 | Offset `+/-2` parity-split comparison | `term_for_dtm(2,2,...)` | `examples/paper_examples.sage` checks the decomposition into two tridiagonal Toeplitz blocks. |
+| Toeplitz-circulant bridge verification | `tests/test_sage_circulant_bridge.sage`, `examples/circulant_bridge_examples.sage` | Exact finite checks of the fixed-size Jacobi correction `det(T_n)=det(C_{n+m}) det(C_{n+m}^{-1}[S,S])`; this is verification code, not a general cyclic-constructor API. |
 
-The code does **not** currently provide dedicated implementations of the cyclic-closure
-results, the proposed finite-corner-defect state extension, or the nonautonomous increasing-rows theorem. The compound/Widom similarity theorem is likewise a mathematical
-identification in the paper rather than a separate runtime constructor.
+The code does **not** provide a general cyclic-closure constructor, the proposed
+finite-corner-defect state extension, or the nonautonomous increasing-rows theorem.  The
+symmetry-paper Toeplitz-circulant bridge is covered by dedicated exact verification scripts
+listed above; those scripts do not introduce a new public cyclic API.  The compound/Widom
+and Hodge identifications are mathematical interpretations rather than separate runtime
+constructors.
+
+## Reproducibility map
+
+- **Constructive recurrences for determinants and permanents of banded Toeplitz matrices**:
+  `src/toeplitz_recurrences.py`, `examples/paper_examples.sage`, and the generic row-column,
+  increasing-rows, Krylov, Fiduccia, and distant-term tests.
+- **Symmetry reductions and recurrence degrees for banded Toeplitz determinants and permanents**:
+  `src/toeplitz_symmetry_reductions.py`, `examples/symmetry_examples.sage`,
+  `tests/test_sage_symmetry_reductions.sage`, and the exact circulant-bridge verification in
+  `tests/test_sage_circulant_bridge.sage` / `examples/circulant_bridge_examples.sage`.
 
 ## Public API and defaults
 
 Sage uses Python keyword arguments rather than Wolfram options. `None` plays the role of
 an automatic/default object for several inputs, while `scalar_recurrence="auto"` is the
 explicit automatic scalarization policy.
+
+### Symmetry-aware determinant constructors
+
+`symmetric_determinant_recurrence(m, ...)` accepts:
+
+| Keyword | Default | Meaning |
+|---|---|---|
+| `diagonal_values` | `None` | Compact `[a0,a1,...,am]` or a full symmetric list in offset order `-m,...,m`; `None` creates exact polynomial indeterminates over `QQ`. |
+| `characteristic_polynomial_variable` | `"x"` | Variable name used by principal Krylov scalarization. |
+| `verbose` | `True` | Reports unrestricted, Catalan, observable, and predicted generic orders. |
+
+`skew_symmetric_determinant_recurrence(m, ...)` accepts the same keywords. Its compact
+`diagonal_values` convention is `[a1,...,am]`, meaning the positive-offset values; the
+negative offsets are their negatives and the main diagonal is zero. A full skew list in
+offset order `-m,...,m` is also accepted.
+
+The symmetric result reports the unrestricted order `binomial(2*m,m)`, the doset level
+counts, Catalan transfer, principal observable order, and the predicted generic scalar degree
+`(3^m+1)/2`. The skew result keeps the full normalized transfer `Q`, returns `Q^2`, its
+principal two-step Krylov polynomial `R(y)`, and the lifted full annihilator `R(x^2)`.  It
+also reports the theoretical Hodge-half dimension `binomial(2*m,m)/2`; the field
+`hodge_half_constructed` is `False` because this representation-theoretic half is not built
+as a local quotient of the normalized row-column states.
 
 ### Row-column recurrence constructors
 
@@ -249,6 +297,53 @@ recomputing a full matrix kernel after every new row. Pivot elimination is fract
 first dependence is found, which is particularly helpful for multivariate polynomial Toeplitz
 parameters.
 
+## Symmetry-aware determinant reductions
+
+The optional module follows the constructive pseudocode of *Symmetry reductions and recurrence
+degrees for banded Toeplitz determinants and permanents*. For a symmetric balanced band,
+newly generated row-column minors are decoded as subset pairs `(A,B)` and straightened
+immediately into the standard doset basis `A <= B` before the transfer entry is stored. The
+level counts are the Narayana numbers and the total reduced state dimension is the Catalan
+number `C_(m+1)`. The existing optimized Krylov engine is then applied to the principal
+coordinate.
+
+```python
+s = symmetric_determinant_recurrence(3, diagonal_values=[2, 3, 5, 7], verbose=False)
+print(s["unrestricted_state_order"])  # 20
+print(s["reduced_state_order"])       # 14
+print(s["observable_order"])          # 14 at this witness
+```
+
+For skew-symmetric bands, the normalized row-column transfer is deliberately **not**
+quotiented state-by-state by transpose parity.  Instead, the implementation keeps the full
+transfer `Q`, forms `Q^2`, and applies the optimized principal Krylov calculation directly to
+that two-step evolution.  If the resulting polynomial is `R(y)`, the full one-step sequence is
+annihilated by `R(x^2)`.  The theoretical Hodge-half dimension `binomial(2*m,m)/2` is reported
+separately and is not presented as a constructed normalized-row-column quotient.
+
+```python
+k = skew_symmetric_determinant_recurrence(3, diagonal_values=[3, 4, 5], verbose=False)
+print(k["structural_hodge_half_order"])    # 10
+print(k["two_step_observable_order"])      # 9
+print(k["full_annihilator_order"])         # 18
+```
+
+The small-width runtime tests independently compare the lifted `R(x^2)` with the direct
+full-sequence Krylov polynomial for `m=1,2,3`.
+
+Run all symmetry-facing examples with:
+
+```bash
+sage examples/symmetry_examples.sage
+```
+
+The fixed-size Toeplitz-circulant correction can be checked independently with:
+
+```bash
+sage tests/test_sage_circulant_bridge.sage
+sage examples/circulant_bridge_examples.sage
+```
+
 ## Position-dependent band weights
 
 ```python
@@ -336,7 +431,8 @@ sage examples/paper_examples.sage
 The example file collects the pentadiagonal determinant/permanent transfers, the `(3,3)`
 state/sparsity count, the sparse `(2,1)` characteristic recurrence and explicit formula,
 the offset `+/-2` parity-split comparison, a Krylov example, a position-dependent transfer,
-and a Fiduccia distant-term calculation.
+and a Fiduccia distant-term calculation. `examples/symmetry_examples.sage` separately
+collects the symmetric doset/Catalan and skew parity reductions.
 
 ## Tests
 
@@ -363,15 +459,19 @@ See `VERIFICATION.md` for the validation status of this exported bundle.
 ## References for distant-term evaluation
 
 - C. M. Fiduccia, "An Efficient Formula for Linear Recurrences", SIAM Journal on
-  Computing 14 (1985), 106-112. DOI:[10.1137/0214007](https://doi.org/10.1137/0214007).
+  Computing 14 (1985), 106-112. DOI: 10.1137/0214007. `https://doi.org/10.1137/0214007`
 - D. I. Khomovsky, "Efficient Computation of Terms of Linear Recurrence Sequences of Any Order",
-  INTEGERS 18 (2018), A39. URL:[https://math.colgate.edu/~integers/s39/s39.pdf](https://math.colgate.edu/~integers/s39/s39.pdf)
-  
+  INTEGERS 18 (2018), A39.
+  `https://math.colgate.edu/~integers/s39/s39.pdf`
+
 ## Citation
 
-Please cite the accompanying paper **Constructive recurrences for determinants and
-permanents of banded Toeplitz matrices**. Machine-readable citation metadata are provided
-in `CITATION.cff`.
+For the generic row-column, increasing-rows, Krylov, Fiduccia, and distant-term code, cite
+**Constructive recurrences for determinants and permanents of banded Toeplitz matrices**.
+For `toeplitz_symmetry_reductions.py` and the symmetry/circulant verification examples, cite
+**Symmetry reductions and recurrence degrees for banded Toeplitz determinants and permanents**.
+`CITATION.cff` provides the software-level citation metadata; this README gives the
+component-specific paper mapping.
 
 ## License
 

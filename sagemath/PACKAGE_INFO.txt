@@ -1,7 +1,8 @@
 Software: Toeplitz recurrence algorithms - SageMath
 Accompanying paper: Constructive recurrences for determinants and permanents of banded Toeplitz matrices
+Optional symmetry module paper: Symmetry reductions and recurrence degrees for banded Toeplitz determinants and permanents
 Authors: Max A. Alekseyev; Dmitry I. Khomovsky
-Code release: v5
+Code release: v7
 Language: SageMath / Python
 Recommended target: SageMath 10.x or later
 External Sage dependencies: none
