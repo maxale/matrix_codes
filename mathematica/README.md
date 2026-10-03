@@ -4,6 +4,10 @@ This directory contains the Mathematica / Wolfram Language implementation accomp
 **Constructive recurrences for determinants and permanents of banded Toeplitz matrices**
 by Max A. Alekseyev and Dmitry I. Khomovsky.
 
+The optional symmetry module also accompanies
+**Symmetry reductions and recurrence degrees for banded Toeplitz determinants and permanents**
+by the same authors.
+
 The code constructs finite recurrences for determinants and permanents of fixed-band
 Toeplitz matrices, supports the two Laplace constructions developed in the paper, adds
 optional Krylov scalarization, handles the position-dependent row-column cocycle, and
@@ -32,18 +36,23 @@ toeplitz_recurrences_mathematica/
 |   |-- ToeplitzRecurrences.wl
 |   |-- ToeplitzRecurrencesKrylov.wl
 |   |-- ToeplitzRecurrencesFiduccia.wl
+|   |-- ToeplitzSymmetryReductions.wl
 |   `-- ToeplitzRecurrencesAll.wl
 |-- examples/
-|   `-- PaperExamples.wl
+|   |-- PaperExamples.wl
+|   `-- SymmetryExamples.wl
 |-- tests/
 |   |-- RunToeplitzAllTests.wl
 |   |-- ToeplitzRecurrencesExamples.wl
 |   |-- ToeplitzRecurrencesKrylovExamples.wl
 |   |-- ToeplitzRecurrencesFiducciaExamples.wl
+|   |-- ToeplitzSymmetryReductionsExamples.wl
+|   |-- test_python_symmetry_contract.py
 |   `-- smoke/
 |       |-- DispatchSmokeTest.wl
 |       |-- KrylovDispatchSmokeTest.wl
 |       |-- FiducciaSmokeTest.wl
+|       |-- SymmetryReductionSmokeTest.wl
 |       `-- ScopeSmokeTest.wl
 `-- tools/
     `-- verify_release.py
@@ -80,21 +89,57 @@ and `DiagonalValues` are supplied in offset order `-m1,...,m2`.
 | Row-column transfer construction | `LinRecForDTM`, `LinRecForPTM` | Uses the same first-discovery state ordering as the paper. |
 | Characteristic-polynomial scalarization | `ScalarRecurrence -> True` | Default scalarization when the transfer is constant. |
 | Observable/Krylov scalarization | `ScalarRecurrenceMethod -> "Krylov"` | Can produce an annihilator smaller than the full transfer characteristic polynomial. |
+| Symmetric determinant doset/Catalan reduction | `SymmetricDeterminantRecurrence` | Straightens every generated symmetric boundary minor immediately into the doset basis, builds the Catalan transfer, and runs principal Krylov scalarization. |
+| Skew-symmetric determinant parity reduction | `SkewSymmetricDeterminantRecurrence` | Computes the full principal Krylov polynomial and the exact even form `P(x)=R(x^2)` for the even-size observable quotient. |
 | Position-dependent row-column cocycle | `PositionDependent -> True` | Returns a position-dependent transfer; constant scalarization is intentionally disabled. |
 | Distant-term evaluation | `FiducciaPolSquarings`, `TermForDTM`, `TermForPTM` | Applies only after a homogeneous constant-coefficient recurrence has been obtained. |
 | Sparse `(2,1)` Toeplitz-Hessenberg spectral example | `LinRecForDTM[2,1,...]`, `TermForDTM[2,1,...]` | `examples/PaperExamples.wl` constructs `det(lambda I-A_n)`, checks the explicit coefficient formula, and exposes the recurrence behind the threefold spectrum. |
 | Offset `+/-2` parity-split comparison | `TermForDTM[2,2,...]` | Reorders odd/even indices into two tridiagonal blocks and checks the product of the corresponding Lucas-U characteristic polynomials. |
 
-The code does **not** currently provide dedicated implementations of the cyclic-closure
-results, the proposed finite-corner-defect state extension, or the nonautonomous
-increasing-rows theorem. The compound/Widom similarity theorem is likewise a mathematical
-identification in the paper rather than a separate runtime constructor in this package.
+The code does **not** provide a general cyclic-closure constructor, the proposed
+finite-corner-defect state extension, or the nonautonomous increasing-rows theorem.  The
+symmetry-paper Toeplitz-circulant bridge is covered by dedicated exact verification files
+listed above; they do not introduce a new public cyclic API.  The compound/Widom and Hodge
+identifications are mathematical interpretations rather than separate runtime constructors.
+
+## Reproducibility map
+
+- **Constructive recurrences for determinants and permanents of banded Toeplitz matrices**:
+  `src/ToeplitzRecurrences.wl`, `src/ToeplitzRecurrencesKrylov.wl`,
+  `src/ToeplitzRecurrencesFiduccia.wl`, `examples/PaperExamples.wl`, and the generic tests.
+- **Symmetry reductions and recurrence degrees for banded Toeplitz determinants and permanents**:
+  `src/ToeplitzSymmetryReductions.wl`, `examples/SymmetryExamples.wl`,
+  `tests/ToeplitzSymmetryReductionsExamples.wl`, and the exact circulant-bridge verification
+  in `tests/ToeplitzCirculantBridgeExamples.wl` / `examples/CirculantBridgeExamples.wl`.
 
 ## Public API and options
 
 The tables below assume the recommended full loader
 `Get["src/ToeplitzRecurrencesAll.wl"]`. In particular, the full loader installs the optional
 `ScalarRecurrenceMethod` selector on `LinRecForDTM` and `LinRecForPTM`.
+
+### Symmetry-aware determinant constructors
+
+`SymmetricDeterminantRecurrence[m,...]` accepts:
+
+| Option | Default | Meaning |
+|---|---|---|
+| `DiagonalValues` | `Automatic` | Compact `{a0,a1,...,am}` or a full symmetric list in offset order `-m,...,m`. `Automatic` uses `\[FormalA][0],...,\[FormalA][m]`. |
+| `CharacteristicPolynomialVariable` | `\[FormalX]` | Polynomial variable used by principal Krylov scalarization. |
+| `Verbose` | `True` | Reports unrestricted, Catalan, observable, and predicted generic orders. |
+
+`SkewSymmetricDeterminantRecurrence[m,...]` accepts the same options. Its compact
+`DiagonalValues` convention is `{a1,...,am}`, meaning the positive-offset values; the
+negative offsets are their negatives and the main diagonal is zero. A full skew list in
+offset order `-m,...,m` is also accepted.
+
+The symmetric result reports the unrestricted order `Binomial[2m,m]`, doset level counts,
+Catalan transfer, principal observable order, and predicted generic scalar degree
+`(3^m+1)/2`. The skew result keeps the full normalized transfer `Q`, returns `Q^2`, its
+principal two-step Krylov polynomial `R(y)`, and the lifted full annihilator `R(x^2)`.
+`StructuralHodgeHalfOrder` reports the theoretical Hodge-half dimension
+`Binomial[2m,m]/2`; `HodgeHalfConstructed` is `False` because that half is not built as a
+local quotient of normalized row-column states.
 
 ### Row-column recurrence constructors
 
@@ -253,6 +298,60 @@ LinRecForDTM[2, 2,
 The returned association includes `"ObservableOrder"` and
 `"ScalarRecurrencePolynomial"` when Krylov scalarization is computed.
 
+## Symmetry-aware determinant reductions
+
+The optional module follows the constructive pseudocode of *Symmetry reductions and recurrence
+degrees for banded Toeplitz determinants and permanents*. For a symmetric balanced band,
+newly generated row-column minors are decoded as subset pairs `(A,B)` and straightened
+immediately into the standard doset basis `A <= B` before the transfer entry is stored. The
+level counts are the Narayana numbers and the total reduced state dimension is the Catalan
+number `C_(m+1)`. The existing optimized Krylov engine is then applied to the principal
+coordinate.
+
+```wl
+s = SymmetricDeterminantRecurrence[3,
+  DiagonalValues -> {2, 3, 5, 7},
+  Verbose -> False
+];
+{s["UnrestrictedStateOrder"], s["ReducedStateOrder"], s["ObservableOrder"]}
+(* {20, 14, 14} at this witness *)
+```
+
+For skew-symmetric bands, the normalized row-column transfer is deliberately **not**
+quotiented state-by-state by transpose parity.  The implementation keeps the full transfer
+`Q`, forms `Q^2`, and applies the optimized principal Krylov calculation directly to that
+two-step evolution.  If the resulting polynomial is `R(y)`, the full one-step sequence is
+annihilated by `R(x^2)`.  The theoretical Hodge-half dimension `Binomial[2m,m]/2` is
+reported separately and is not presented as a constructed normalized-row-column quotient.
+
+```wl
+k = SkewSymmetricDeterminantRecurrence[3,
+  DiagonalValues -> {3, 4, 5},
+  Verbose -> False
+];
+{k["StructuralHodgeHalfOrder"], k["TwoStepObservableOrder"], k["FullAnnihilatorOrder"]}
+(* {10, 9, 18} *)
+```
+
+The small-width runtime tests independently compare the lifted `R(x^2)` with the direct
+full-sequence Krylov polynomial for `m=1,2,3`.
+
+Run the symmetry-facing examples with:
+
+```wl
+Get["examples/SymmetryExamples.wl"];
+RunToeplitzSymmetryExamples[]
+```
+
+The fixed-size Toeplitz-circulant correction can be checked independently with:
+
+```wl
+Get["tests/ToeplitzCirculantBridgeExamples.wl"];
+RunToeplitzCirculantBridgeTests[]
+Get["examples/CirculantBridgeExamples.wl"];
+RunToeplitzCirculantBridgeExample[]
+```
+
 ## Position-dependent band weights
 
 ```wl
@@ -318,8 +417,8 @@ TermForPTM[1, 1, 10^8,
 The Krylov recurrence may be requested when it is smaller:
 
 ```wl
-TermForDTM[2, 2, 10^3,
-  DiagonalValues -> {c, B, A, B, c},
+TermForDTM[2, 2, 10^6,
+  DiagonalValues -> {C, B, A, B, C},
   ScalarRecurrenceMethod -> "Krylov"]
 ```
 
@@ -379,9 +478,12 @@ still be supplied through `DiagonalValues`, `BandEntryFunction`, and
 
 ## Citation
 
-Please cite the accompanying paper **Constructive recurrences for determinants and
-permanents of banded Toeplitz matrices**. Machine-readable citation metadata are provided
-in `CITATION.cff`.
+For the generic row-column, increasing-rows, Krylov, Fiduccia, and distant-term code, cite
+**Constructive recurrences for determinants and permanents of banded Toeplitz matrices**.
+For `ToeplitzSymmetryReductions.wl` and the symmetry/circulant verification examples, cite
+**Symmetry reductions and recurrence degrees for banded Toeplitz determinants and permanents**.
+`CITATION.cff` provides software-level citation metadata; this README gives the
+component-specific paper mapping.
 
 ## License
 

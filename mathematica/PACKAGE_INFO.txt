@@ -1,7 +1,8 @@
 Software: Toeplitz recurrence algorithms - Wolfram Language
 Accompanying paper: Constructive recurrences for determinants and permanents of banded Toeplitz matrices
+Optional symmetry module paper: Symmetry reductions and recurrence degrees for banded Toeplitz determinants and permanents
 Authors: Max A. Alekseyev; Dmitry I. Khomovsky
-Code release: v10
+Code release: v14
 Language: Wolfram Language / Mathematica
 Minimum target: Mathematica 2021.1 or later
 External Wolfram dependencies: none
